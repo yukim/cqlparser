@@ -3,7 +3,10 @@ name = "cqlparser"
 version = "0.1.0"
 authors = ["Yuki Morishita <mor.yuki@gmail.com>"]
 description = "Apache Cassandra CQL parser"
+homepage = "https://github.com/yukim/cqlparser"
+repository = "https://github.com/yukim/cqlparser"
 license = "Apache-2.0"
+keywords = ["cassandra", "parser"]
 edition = "2018"
 
 [lib]
