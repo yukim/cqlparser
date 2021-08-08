@@ -596,6 +596,15 @@ impl<'a> Parser<'a> {
             Ok(CqlType::Collection(CollectionType::Set(Box::new(
                 inner_type,
             ))))
+        } else if self.expect(TokenType::Keyword(Keyword::Tuple)).is_ok() {
+            self.expect(TokenType::Lt)?;
+            let mut inner_types = Vec::new();
+            inner_types.push(self.parse_data_type()?);
+            while self.expect(TokenType::Comma).is_ok() {
+                inner_types.push(self.parse_data_type()?);
+            }
+            self.expect(TokenType::Gt)?;
+            Ok(CqlType::Tuple(inner_types))
         } else {
             Err(ParseError::new())
         }

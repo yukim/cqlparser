@@ -30,7 +30,12 @@ fn test_create() {
             )]),
         ),
         (
-            "CREATE TABLE ks.test (key int, values set<text>, PRIMARY KEY ((key))) WITH prop = 2",
+            "CREATE TABLE ks.test (
+                key int,
+                values set<text>,
+                col1 frozen<tuple<text, int>>,
+                PRIMARY KEY ((key))
+            ) WITH prop = 2",
             Ok(vec![CqlStatement::CreateTable(CreateTableStatement {
                 name: QualifiedName::new(Some(String::from("ks")), String::from("test")),
                 if_not_exists: false,
@@ -41,6 +46,13 @@ fn test_create() {
                         CqlType::Collection(CollectionType::Set(Box::new(CqlType::Native(
                             NativeDataType::Text,
                         )))),
+                    ),
+                    (
+                        String::from("col1"),
+                        CqlType::Frozen(Box::new(CqlType::Tuple(vec![
+                            CqlType::Native(NativeDataType::Text),
+                            CqlType::Native(NativeDataType::Int),
+                        ]))),
                     ),
                 ],
                 static_columns: vec![],
