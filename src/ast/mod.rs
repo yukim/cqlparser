@@ -132,7 +132,7 @@ pub enum Literal {
     Null,
 
     /// List collection literal
-    List(Vec<Term>),
+    List(Vec<Expression>),
 
     /// ## Set literal
     /// Example: {1, 2, 3}
@@ -249,61 +249,6 @@ impl TryFrom<&Token> for Operator {
     }
 }
 
-/// # Term
-///
-/// `Term` in CQL is arithmetic operations of `simple terms`.
-///
-/// Term is used in:
-/// - Collection subselection: [term RANGE term]
-/// - Custom index expression: expr(indexName, term)
-/// - Normal insert statement: VALUES (term, term,..)
-/// - Collection element deletion: column[term]
-/// - CREATE AGGREGATE ... INITCOND term
-/// - List, set and map literal: [term, term], {term, term}, {term: term, term: term}
-/// - User defined type literal: {fideng: term, fident: term}
-/// - Tuple literal: (term, term, ...)
-/// - Function call args: functionName(term, term)
-/// - Column operators: col = term, col = col + term, col += term, col[term] = term
-/// - Relations
-///
-#[derive(Debug, PartialEq)]
-#[cfg_attr(target_arch = "wasm32", derive(serde::Serialize, serde::Deserialize))]
-pub enum Term {
-    /// Simple term
-    Simple(SimpleTerm),
-
-    /// Unary operation
-    UnaryOp(UnaryOp<Box<Term>, Operator>),
-
-    /// Binary operation
-    BinaryOp(BinaryOp<Box<Term>, Operator>),
-}
-
-/// ## Simple term
-/// - value
-/// - function call
-/// - cast
-#[derive(Debug, PartialEq)]
-#[cfg_attr(target_arch = "wasm32", derive(serde::Serialize, serde::Deserialize))]
-pub enum SimpleTerm {
-    /// Value
-    Value(Literal),
-    /// Function call
-    FunctionCall(QualifiedName, Vec<Term>),
-    /// Type cast
-    /// `(type) simpleTerm`
-    TypeCast(CqlType, Box<SimpleTerm>),
-}
-
-// Column Identifiers.  These need to be treated differently from other
-// identifiers because the underlying comparator is not necessarily text. See
-// CASSANDRA-8178 for details.
-// Also, we need to support the internal of the super column map (for backward
-// compatibility) which is empty (we only want to allow this is in data manipulation
-// queries, not in schema defition etc).
-//
-// return ColumnMetadata::Literal
-
 /// # Expression
 ///
 /// `Expression`s are used in the following:
@@ -406,51 +351,6 @@ impl Property {
 /// - Tuple type
 /// - User defined type
 /// - Custom data type
-///
-/// comparatorType returns [CQL3Type.Raw t]
-///     : n=native_type     { $t = CQL3Type.Raw.from(n); }
-///     | c=collection_type { $t = c; }
-///     | tt=tuple_type     { $t = tt; }
-///     | id=userTypeName   { $t = CQL3Type.Raw.userType(id); }
-///     | K_FROZEN '<' f=comparatorType '>'
-///       {
-///         try {
-///             $t = f.freeze();
-///         } catch (InvalidRequestException e) {
-///             addRecognitionError(e.getMessage());
-///         }
-///       }
-///     | s=STRING_LITERAL
-///       {
-///         try {
-///             $t = CQL3Type.Raw.from(new CQL3Type.Custom($s.text));
-///         } catch (SyntaxException e) {
-///             addRecognitionError("Cannot parse type " + $s.text + ": " + e.getMessage());
-///         } catch (ConfigurationException e) {
-///             addRecognitionError("Error setting type " + $s.text + ": " + e.getMessage());
-///         }
-///       }
-///     ;
-///
-/// collection_type returns [CQL3Type.Raw pt]
-///     : K_MAP  '<' t1=comparatorType ',' t2=comparatorType '>'
-///         {
-///             // if we can't parse either t1 or t2, antlr will "recover" and we may have t1 or t2 null.
-///             if (t1 != null && t2 != null)
-///                 $pt = CQL3Type.Raw.map(t1, t2);
-///         }
-///     | K_LIST '<' t=comparatorType '>'
-///         { if (t != null) $pt = CQL3Type.Raw.list(t); }
-///     | K_SET  '<' t=comparatorType '>'
-///         { if (t != null) $pt = CQL3Type.Raw.set(t); }
-///     ;
-///
-/// tuple_type returns [CQL3Type.Raw t]
-///     @init {List<CQL3Type.Raw> types = new ArrayList<>();}
-///     @after {$t = CQL3Type.Raw.tuple(types);}
-///     : K_TUPLE '<' t1=comparatorType { types.add(t1); } (',' tn=comparatorType { types.add(tn); })* '>'
-///     ;
-///
 #[derive(Debug, PartialEq)]
 #[cfg_attr(target_arch = "wasm32", derive(serde::Serialize, serde::Deserialize))]
 pub enum CqlType {
@@ -534,7 +434,7 @@ pub enum CollectionType {
     Set(Box<CqlType>),
 }
 
-/// # Statement
+/// Statement
 #[derive(Debug, PartialEq)]
 #[cfg_attr(target_arch = "wasm32", derive(serde::Serialize, serde::Deserialize))]
 pub enum CqlStatement {
