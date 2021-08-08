@@ -124,7 +124,7 @@ impl<'a> Parser<'a> {
             match next.1.token_type {
                 // Skip whitespaces and comments
                 TokenType::Whitespace | TokenType::Comment(_) => continue,
-                _ => return Some(dbg!(next)),
+                _ => return Some(next),
             }
         }
         None
@@ -251,7 +251,7 @@ impl<'a> Parser<'a> {
                     if self.expect(TokenType::RParen).is_ok() {
                         return Ok(Expression::Value(Literal::Tuple(Vec::new())));
                     }
-                    let maybe_cql_type = dbg!(self.parse_data_type());
+                    let maybe_cql_type = self.parse_data_type();
                     // can be type cast: `(type) expr`
                     let in_paren = if maybe_cql_type.is_ok() {
                         // if next token is ')', this is type cast
